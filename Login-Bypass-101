@@ -1,0 +1,7 @@
+Login Bypass 101
+
+As the Title gives us hint we have to bypass the login, so the most common attack is SQL Injection attack, we can enter malicious sql query in the Password Field or in the Both Field:
+
+In password field, Enter:
+
+' OR '1'='1 
