@@ -1,0 +1,89 @@
+# Baby RSA — Wiener attack decryption script in python
+# copy all the script save in a file: script.py in your linux machine
+# Run the script by: python3 script.py
+# Works when d is too small (d < n**0.25 / 3 typically)
+
+from math import isqrt
+
+# ---------- Given challenge data ----------
+n = 10098822965880530251844085158769805169028165470387490461730163509494125182636272467308392241185266781492341832928127251402056376659945214767398644538254701
+e = 2661272780129341290381512824573848197468052167495196532462669369709139888501268642874110288352393083828432865642410902230342152506102009982930685488555283
+c = 3102678713428327991997465916926326035466648950181006708408518326040515538277103260349184924775992544233809130106846464050092934059244756642282964581086845
+
+# ---------- Utilities ----------
+def cont_frac(numer, denom):
+    """Continued fraction expansion of numer/denom."""
+    a = []
+    while denom:
+        q = numer // denom
+        a.append(q)
+        numer, denom = denom, numer - q * denom
+    return a
+
+def convergents(cf):
+    """Generate convergents (k/d) from a continued fraction list."""
+    num1, num2 = 1, 0
+    den1, den2 = 0, 1
+    for a in cf:
+        num = a * num1 + num2
+        den = a * den1 + den2
+        yield (num, den)
+        num2, num1 = num1, num
+        den2, den1 = den1, den
+
+def is_perfect_square(x):
+    if x < 0:
+        return False
+    y = isqrt(x)
+    return y * y == x
+
+# ---------- Wiener's attack ----------
+def wiener_attack(e, n):
+    cf = cont_frac(e, n)
+    for k, d in convergents(cf):
+        if k == 0:
+            continue
+        # (e*d - 1) must be divisible by k -> phi is integer
+        if (e * d - 1) % k != 0:
+            continue
+        phi = (e * d - 1) // k
+
+        # Solve for p and q using: x^2 - (n - phi + 1)x + n = 0
+        s = n - phi + 1  # p + q
+        disc = s * s - 4 * n
+        if disc < 0 or not is_perfect_square(disc):
+            continue
+        t = isqrt(disc)
+        # Candidate primes
+        p = (s + t) // 2
+        q = (s - t) // 2
+        if p * q == n and p > 1 and q > 1:
+            return d, p, q
+    return None, None, None
+
+d, p, q = wiener_attack(e, n)
+if d is None:
+    raise SystemExit("[!] Wiener attack failed — this key may not satisfy the small-d condition.")
+
+print("[+] Recovered d:", d)
+print("[+] Factors p, q:")
+print("p =", p)
+print("q =", q)
+
+# ---------- Decrypt ----------
+m = pow(c, d, n)
+
+# Convert integer -> bytes (strip leading nulls)
+def int_to_bytes(i):
+    # Produce a byte array long enough to hold 'i'
+    length = (i.bit_length() + 7) // 8
+    return i.to_bytes(length, byteorder="big")
+
+pt = int_to_bytes(m)
+print("\n[+] Plaintext (bytes):", pt)
+
+# If it looks like UTF-8 text, print it nicely too
+try:
+    print("[+] Plaintext (utf-8):", pt.decode())
+except UnicodeDecodeError:
+    pass
