@@ -1,0 +1,22 @@
+# Shift Happens - Crypto Challenge
+
+We were given the following ciphertext:
+
+Ukq ckp ia! Dana eo pda bhwc: OS{Cn3wp_SKng_Iu_BahhKs}
+
+
+Notice that the ciphertext already contains something resembling a flag in the format OS{...}. Since the expected flag format is SW{...}, this hints that the text is simply shifted.
+
+To solve it, we can use a ROT (Caesar shift) decryption tool: https://www.cachesleuth.com/rot.html
+
+
+1. Paste the ciphertext into the tool.
+
+2. Select ROT All Decrypt.
+
+3. Check each output until you find the correct shift.
+
+At ROT 22, the plaintext appears:
+You got me! Here is the flag: SW{Gr3at_WOrk_My_FellOw}
+
+✅ Final Flag: SW{Gr3at_WOrk_My_FellOw}
